@@ -1,0 +1,38 @@
+<div class="card">
+  <h3>{{ selectedPart ? 'Edit Part' : 'Add New Part' }}</h3>
+
+  <form (ngSubmit)="onSubmit()">
+    <input
+      type="text"
+      placeholder="Part Name"
+      [(ngModel)]="formData.partName"
+      name="partName"
+      required
+    />
+
+    <input
+      type="text"
+      placeholder="Brand"
+      [(ngModel)]="formData.brand"
+      name="brand"
+      required
+    />
+
+    <input
+      type="number"
+      placeholder="Price"
+      [(ngModel)]="formData.price"
+      name="price"
+      min="0"
+      required
+    />
+
+    <label>
+      Installed
+      <input type="checkbox" [(ngModel)]="formData.installed" name="installed" />
+    </label>
+
+    <button type="submit">{{ selectedPart ? 'Update' : 'Create' }}</button>
+    <button type="button" *ngIf="selectedPart" (click)="onCancel()">Cancel</button>
+  </form>
+</div>

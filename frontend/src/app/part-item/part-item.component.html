@@ -1,0 +1,9 @@
+<div class="card">
+  <p><strong>Part:</strong> {{ part.partName }}</p>
+  <p><strong>Brand:</strong> {{ part.brand }}</p>
+  <p><strong>Price:</strong> ${{ part.price }}</p>
+  <p><strong>Installed:</strong> {{ part.installed ? 'Yes' : 'No' }}</p>
+
+  <button (click)="onEdit()">Edit</button>
+  <button (click)="onDelete()">Delete</button>
+</div>
