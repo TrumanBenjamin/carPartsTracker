@@ -3,6 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Part } from '../models/part';
 
+interface PartFormData {
+  _id?: string;
+  partName: string;
+  brand: string;
+  price: number | null;
+  installed: boolean;
+}
+
 @Component({
   selector: 'app-part-edit',
   standalone: true,
@@ -14,7 +22,7 @@ export class PartEditComponent implements OnChanges {
   @Output() save = new EventEmitter<Part>();
   @Output() cancel = new EventEmitter<void>();
 
-  formData: Part = this.getEmptyPart();
+  formData: PartFormData = this.getEmptyPart();
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selectedPart']) {
@@ -25,7 +33,15 @@ export class PartEditComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    this.save.emit({ ...this.formData });
+    if (this.formData.price === null) {
+      return;
+    }
+
+    this.save.emit({
+      ...this.formData,
+      price: Number(this.formData.price),
+    });
+
     if (!this.selectedPart) {
       this.formData = this.getEmptyPart();
     }
@@ -36,11 +52,11 @@ export class PartEditComponent implements OnChanges {
     this.formData = this.getEmptyPart();
   }
 
-  private getEmptyPart(): Part {
+  private getEmptyPart(): PartFormData {
     return {
       partName: '',
       brand: '',
-      price: 0,
+      price: null,
       installed: false,
     };
   }

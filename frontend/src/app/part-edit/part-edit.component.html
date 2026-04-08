@@ -26,19 +26,28 @@
 
     <div>
       <label>Price</label>
-      <input
-        type="number"
-        placeholder="120"
-        [(ngModel)]="formData.price"
-        name="price"
-        min="0"
-        required
-      />
+      <div class="money-input">
+        <span class="money-prefix">$</span>
+        <input
+          type="number"
+          placeholder="120"
+          [(ngModel)]="formData.price"
+          name="price"
+          min="0"
+          required
+        />
+      </div>
     </div>
 
-    <label class="checkbox-row">
-      <input type="checkbox" [(ngModel)]="formData.installed" name="installed" />
-      Installed
+    <label class="toggle-row">
+      <span>Installed</span>
+      <input
+        type="checkbox"
+        class="toggle-input"
+        [(ngModel)]="formData.installed"
+        name="installed"
+      />
+      <span class="toggle-slider" aria-hidden="true"></span>
     </label>
 
     <div class="actions full">

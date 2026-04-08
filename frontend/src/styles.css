@@ -58,6 +58,11 @@ body {
   font-size: 0.8rem;
 }
 
+.add-card {
+  display: block;
+  margin-bottom: 16px;
+}
+
 .card {
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--border);
@@ -73,8 +78,13 @@ body {
   gap: 10px;
 }
 
-.form-grid .full {
+ .form-grid .full {
   grid-column: 1 / -1;
+}
+
+label {
+  display: inline-block;
+  margin-bottom: 6px;
 }
 
 input[type='text'],
@@ -93,11 +103,70 @@ input:focus {
   box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.2);
 }
 
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+
+.money-input {
+  position: relative;
+}
+
+.money-prefix {
+  position: absolute;
+  left: 10px;
+  top: 43%;
+  transform: translateY(-50%);
   color: var(--muted);
+  font-weight: 600;
+}
+
+.money-input input {
+  padding-left: 28px;
+}
+
+.toggle-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  color: var(--muted);
+  user-select: none;
+  margin-bottom: 0;
+  margin-top: 34px;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: #2d3648;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  transition: transform 0.2s ease;
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: #2563eb;
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(20px);
 }
 
 .actions {
@@ -129,11 +198,13 @@ button {
 
 .item-name {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 2.25rem;
+  line-height: 1.2;
 }
 
 .item-price {
   font-weight: 700;
+  font-size: 1.95rem;
   color: #c7d2fe;
 }
 
@@ -158,4 +229,33 @@ button {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+
+.total-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.total-card strong {
+  font-size: 1.35rem;
+  color: #c7d2fe;
 }

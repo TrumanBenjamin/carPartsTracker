@@ -2,7 +2,6 @@
   <header class="app-header">
     <div>
       <h2 class="app-title">Car Parts Tracker</h2>
-      <p class="app-subtitle">Simple CRUD dashboard for your installed and planned parts.</p>
     </div>
     <span class="badge">{{ parts.length }} total</span>
   </header>
@@ -12,6 +11,7 @@
   </div>
 
   <app-part-edit
+    class="add-card"
     [selectedPart]="selectedPart"
     (save)="onSavePart($event)"
     (cancel)="onCancelEdit()"
@@ -25,4 +25,9 @@
     (edit)="onEditPart($event)"
     (remove)="onDeletePart($event)"
   ></app-part-item>
+
+  <div class="card total-card" *ngIf="parts.length > 0">
+    <span>Total Value</span>
+    <strong>${{ totalPrice.toFixed(2) }}</strong>
+  </div>
 </div>

@@ -14,7 +14,7 @@ import { PartEditComponent } from '../part-edit/part-edit.component';
 export class PartListComponent implements OnInit {
   parts: Part[] = [];
   selectedPart: Part | null = null;
-  errorMessage: string = '';
+  errorMessage = '';
 
   constructor(private partService: PartService) {}
 
@@ -24,19 +24,32 @@ export class PartListComponent implements OnInit {
 
   loadParts(): void {
     this.partService.getParts().subscribe({
-      next: (data) => (this.parts = data),
-      error: (error) => console.error('Error loading parts:', error),
+      next: (data) => {
+        this.parts = data;
+        this.errorMessage = '';
+      },
+      error: (error) => {
+        this.errorMessage =
+          error?.error?.message ||
+          'Cannot load parts right now. Check backend and MongoDB connection.';
+      },
     });
   }
 
   onSavePart(part: Part): void {
     if (part._id) {
-      this.partService.updatePart(part._id, part).subscribe(() => {
-        this.selectedPart = null;
-        this.loadParts();
+      this.partService.updatePart(part._id, part).subscribe({
+        next: () => {
+          this.selectedPart = null;
+          this.loadParts();
+        },
+        error: (error) => (this.errorMessage = error?.error?.message || 'Update failed'),
       });
     } else {
-      this.partService.createPart(part).subscribe(() => this.loadParts());
+      this.partService.createPart(part).subscribe({
+        next: () => this.loadParts(),
+        error: (error) => (this.errorMessage = error?.error?.message || 'Create failed'),
+      });
     }
   }
 
@@ -45,10 +58,18 @@ export class PartListComponent implements OnInit {
   }
 
   onDeletePart(id: string): void {
-    this.partService.deletePart(id).subscribe(() => this.loadParts());
+    this.partService.deletePart(id).subscribe({
+      next: () => this.loadParts(),
+      error: (error) => (this.errorMessage = error?.error?.message || 'Delete failed'),
+    });
   }
 
   onCancelEdit(): void {
     this.selectedPart = null;
   }
+
+  get totalPrice(): number {
+    return this.parts.reduce((sum, part) => sum + Number(part.price || 0), 0);
+  }
 }
+
