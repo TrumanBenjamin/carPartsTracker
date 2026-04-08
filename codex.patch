@@ -1,0 +1,784 @@
+diff --git a/backend/.env.example b/backend/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..5760b1c4ceefda8351e8501647c37efa506b8902
+--- /dev/null
++++ b/backend/.env.example
+@@ -0,0 +1,2 @@
++PORT=3000
++MONGODB_URI=mongodb://127.0.0.1:27017/carPartsTracker
+diff --git a/backend/package.json b/backend/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..03607eeda8714774c665fa0b2b7595b9bf0c1dcf
+--- /dev/null
++++ b/backend/package.json
+@@ -0,0 +1,22 @@
++{
++  "name": "car-parts-tracker-backend",
++  "version": "1.0.0",
++  "description": "Simple Express + MongoDB API for Car Parts Tracker",
++  "main": "server.js",
++  "scripts": {
++    "start": "node server.js",
++    "dev": "nodemon server.js"
++  },
++  "keywords": ["express", "mongodb", "mongoose", "mean"],
++  "author": "",
++  "license": "ISC",
++  "dependencies": {
++    "cors": "^2.8.5",
++    "dotenv": "^16.4.5",
++    "express": "^4.19.2",
++    "mongoose": "^8.5.1"
++  },
++  "devDependencies": {
++    "nodemon": "^3.1.4"
++  }
++}
+diff --git a/backend/server.js b/backend/server.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..535c05eb9b1b34285250efb0ac590c40679d8d7a
+--- /dev/null
++++ b/backend/server.js
+@@ -0,0 +1,32 @@
++const express = require('express');
++const mongoose = require('mongoose');
++const cors = require('cors');
++require('dotenv').config();
++
++const partRoutes = require('./src/routes/part.routes');
++
++const app = express();
++const PORT = process.env.PORT || 3000;
++const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/carPartsTracker';
++
++app.use(cors());
++app.use(express.json());
++
++app.get('/', (req, res) => {
++  res.json({ message: 'Car Parts Tracker API is running' });
++});
++
++app.use('/parts', partRoutes);
++
++mongoose
++  .connect(MONGODB_URI)
++  .then(() => {
++    console.log('Connected to MongoDB');
++    app.listen(PORT, () => {
++      console.log(`Server listening on http://localhost:${PORT}`);
++    });
++  })
++  .catch((error) => {
++    console.error('MongoDB connection failed:', error.message);
++    process.exit(1);
++  });
+diff --git a/backend/src/controllers/part.controller.js b/backend/src/controllers/part.controller.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..69417ce741fe54779521f005a5a059651220d596
+--- /dev/null
++++ b/backend/src/controllers/part.controller.js
+@@ -0,0 +1,64 @@
++const Part = require('../models/part.model');
++
++exports.getAllParts = async (req, res) => {
++  try {
++    const parts = await Part.find().sort({ createdAt: -1 });
++    res.json(parts);
++  } catch (error) {
++    res.status(500).json({ message: 'Failed to fetch parts' });
++  }
++};
++
++exports.getPartById = async (req, res) => {
++  try {
++    const part = await Part.findById(req.params.id);
++
++    if (!part) {
++      return res.status(404).json({ message: 'Part not found' });
++    }
++
++    res.json(part);
++  } catch (error) {
++    res.status(400).json({ message: 'Invalid part id' });
++  }
++};
++
++exports.createPart = async (req, res) => {
++  try {
++    const part = await Part.create(req.body);
++    res.status(201).json(part);
++  } catch (error) {
++    res.status(400).json({ message: 'Failed to create part', error: error.message });
++  }
++};
++
++exports.updatePart = async (req, res) => {
++  try {
++    const part = await Part.findByIdAndUpdate(req.params.id, req.body, {
++      new: true,
++      runValidators: true,
++    });
++
++    if (!part) {
++      return res.status(404).json({ message: 'Part not found' });
++    }
++
++    res.json(part);
++  } catch (error) {
++    res.status(400).json({ message: 'Failed to update part', error: error.message });
++  }
++};
++
++exports.deletePart = async (req, res) => {
++  try {
++    const part = await Part.findByIdAndDelete(req.params.id);
++
++    if (!part) {
++      return res.status(404).json({ message: 'Part not found' });
++    }
++
++    res.json({ message: 'Part deleted successfully' });
++  } catch (error) {
++    res.status(400).json({ message: 'Invalid part id' });
++  }
++};
+diff --git a/backend/src/models/part.model.js b/backend/src/models/part.model.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c17671308df39ddbd7fcaabcc89840d42f62b4c
+--- /dev/null
++++ b/backend/src/models/part.model.js
+@@ -0,0 +1,30 @@
++const mongoose = require('mongoose');
++
++const partSchema = new mongoose.Schema(
++  {
++    partName: {
++      type: String,
++      required: true,
++      trim: true,
++    },
++    brand: {
++      type: String,
++      required: true,
++      trim: true,
++    },
++    price: {
++      type: Number,
++      required: true,
++      min: 0,
++    },
++    installed: {
++      type: Boolean,
++      default: false,
++    },
++  },
++  {
++    timestamps: true,
++  }
++);
++
++module.exports = mongoose.model('Part', partSchema);
+diff --git a/backend/src/routes/part.routes.js b/backend/src/routes/part.routes.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0b04babf4f5b6c34f03f266fb3ab5d31add910d
+--- /dev/null
++++ b/backend/src/routes/part.routes.js
+@@ -0,0 +1,11 @@
++const express = require('express');
++const router = express.Router();
++const partController = require('../controllers/part.controller');
++
++router.get('/', partController.getAllParts);
++router.get('/:id', partController.getPartById);
++router.post('/', partController.createPart);
++router.put('/:id', partController.updatePart);
++router.delete('/:id', partController.deletePart);
++
++module.exports = router;
+diff --git a/frontend/angular.json b/frontend/angular.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..5009cfdfc8921e5aba9c7a20d78b048f9f9440c5
+--- /dev/null
++++ b/frontend/angular.json
+@@ -0,0 +1,31 @@
++{
++  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
++  "version": 1,
++  "projects": {
++    "car-parts-tracker-frontend": {
++      "projectType": "application",
++      "root": "",
++      "sourceRoot": "src",
++      "architect": {
++        "build": {
++          "builder": "@angular-devkit/build-angular:application",
++          "options": {
++            "outputPath": "dist/car-parts-tracker-frontend",
++            "index": "src/index.html",
++            "browser": "src/main.ts",
++            "tsConfig": "tsconfig.app.json",
++            "assets": ["src/favicon.ico", "src/assets"],
++            "styles": ["src/styles.css"]
++          }
++        },
++        "serve": {
++          "builder": "@angular-devkit/build-angular:dev-server",
++          "options": {
++            "buildTarget": "car-parts-tracker-frontend:build"
++          }
++        }
++      }
++    }
++  },
++  "cli": {"analytics": false}
++}
+diff --git a/frontend/package.json b/frontend/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..066839655f6bd34755a7d627a77d068474e6d719
+--- /dev/null
++++ b/frontend/package.json
+@@ -0,0 +1,28 @@
++{
++  "name": "car-parts-tracker-frontend",
++  "version": "1.0.0",
++  "private": true,
++  "scripts": {
++    "start": "ng serve",
++    "build": "ng build"
++  },
++  "dependencies": {
++    "@angular/animations": "^17.3.0",
++    "@angular/common": "^17.3.0",
++    "@angular/compiler": "^17.3.0",
++    "@angular/core": "^17.3.0",
++    "@angular/forms": "^17.3.0",
++    "@angular/platform-browser": "^17.3.0",
++    "@angular/platform-browser-dynamic": "^17.3.0",
++    "@angular/router": "^17.3.0",
++    "rxjs": "^7.8.0",
++    "tslib": "^2.6.0",
++    "zone.js": "^0.14.0"
++  },
++  "devDependencies": {
++    "@angular-devkit/build-angular": "^17.3.0",
++    "@angular/cli": "^17.3.0",
++    "@angular/compiler-cli": "^17.3.0",
++    "typescript": "^5.4.0"
++  }
++}
+diff --git a/frontend/src/app/app.component.ts b/frontend/src/app/app.component.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..05afe940b2bf6a261ba762e3471ea7a3c461c54a
+--- /dev/null
++++ b/frontend/src/app/app.component.ts
+@@ -0,0 +1,10 @@
++import { Component } from '@angular/core';
++import { PartListComponent } from './part-list/part-list.component';
++
++@Component({
++  selector: 'app-root',
++  standalone: true,
++  imports: [PartListComponent],
++  template: '<app-part-list></app-part-list>',
++})
++export class AppComponent {}
+diff --git a/frontend/src/app/models/part.ts b/frontend/src/app/models/part.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..20559bd1f8591e11f1de54e9c38c545c29cfa0fa
+--- /dev/null
++++ b/frontend/src/app/models/part.ts
+@@ -0,0 +1,7 @@
++export interface Part {
++  _id?: string;
++  partName: string;
++  brand: string;
++  price: number;
++  installed: boolean;
++}
+diff --git a/frontend/src/app/part-edit/part-edit.component.html b/frontend/src/app/part-edit/part-edit.component.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..364039cf7fe711c9879b8da4ad8a51068af8ad53
+--- /dev/null
++++ b/frontend/src/app/part-edit/part-edit.component.html
+@@ -0,0 +1,38 @@
++<div class="card">
++  <h3>{{ selectedPart ? 'Edit Part' : 'Add New Part' }}</h3>
++
++  <form (ngSubmit)="onSubmit()">
++    <input
++      type="text"
++      placeholder="Part Name"
++      [(ngModel)]="formData.partName"
++      name="partName"
++      required
++    />
++
++    <input
++      type="text"
++      placeholder="Brand"
++      [(ngModel)]="formData.brand"
++      name="brand"
++      required
++    />
++
++    <input
++      type="number"
++      placeholder="Price"
++      [(ngModel)]="formData.price"
++      name="price"
++      min="0"
++      required
++    />
++
++    <label>
++      Installed
++      <input type="checkbox" [(ngModel)]="formData.installed" name="installed" />
++    </label>
++
++    <button type="submit">{{ selectedPart ? 'Update' : 'Create' }}</button>
++    <button type="button" *ngIf="selectedPart" (click)="onCancel()">Cancel</button>
++  </form>
++</div>
+diff --git a/frontend/src/app/part-edit/part-edit.component.ts b/frontend/src/app/part-edit/part-edit.component.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..436bc76ce789bdf4573bada23e5a4b35bfef3807
+--- /dev/null
++++ b/frontend/src/app/part-edit/part-edit.component.ts
+@@ -0,0 +1,47 @@
++import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { FormsModule } from '@angular/forms';
++import { Part } from '../models/part';
++
++@Component({
++  selector: 'app-part-edit',
++  standalone: true,
++  imports: [CommonModule, FormsModule],
++  templateUrl: './part-edit.component.html',
++})
++export class PartEditComponent implements OnChanges {
++  @Input() selectedPart: Part | null = null;
++  @Output() save = new EventEmitter<Part>();
++  @Output() cancel = new EventEmitter<void>();
++
++  formData: Part = this.getEmptyPart();
++
++  ngOnChanges(changes: SimpleChanges): void {
++    if (changes['selectedPart']) {
++      this.formData = this.selectedPart
++        ? { ...this.selectedPart }
++        : this.getEmptyPart();
++    }
++  }
++
++  onSubmit(): void {
++    this.save.emit({ ...this.formData });
++    if (!this.selectedPart) {
++      this.formData = this.getEmptyPart();
++    }
++  }
++
++  onCancel(): void {
++    this.cancel.emit();
++    this.formData = this.getEmptyPart();
++  }
++
++  private getEmptyPart(): Part {
++    return {
++      partName: '',
++      brand: '',
++      price: 0,
++      installed: false,
++    };
++  }
++}
+diff --git a/frontend/src/app/part-item/part-item.component.html b/frontend/src/app/part-item/part-item.component.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..ff71ad865cf5fe2d4e5c6790b17099dfe4a23bed
+--- /dev/null
++++ b/frontend/src/app/part-item/part-item.component.html
+@@ -0,0 +1,9 @@
++<div class="card">
++  <p><strong>Part:</strong> {{ part.partName }}</p>
++  <p><strong>Brand:</strong> {{ part.brand }}</p>
++  <p><strong>Price:</strong> ${{ part.price }}</p>
++  <p><strong>Installed:</strong> {{ part.installed ? 'Yes' : 'No' }}</p>
++
++  <button (click)="onEdit()">Edit</button>
++  <button (click)="onDelete()">Delete</button>
++</div>
+diff --git a/frontend/src/app/part-item/part-item.component.ts b/frontend/src/app/part-item/part-item.component.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c3d78101b11ede9083c7d65a9f17c7ef99f727c
+--- /dev/null
++++ b/frontend/src/app/part-item/part-item.component.ts
+@@ -0,0 +1,25 @@
++import { Component, EventEmitter, Input, Output } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { Part } from '../models/part';
++
++@Component({
++  selector: 'app-part-item',
++  standalone: true,
++  imports: [CommonModule],
++  templateUrl: './part-item.component.html',
++})
++export class PartItemComponent {
++  @Input() part!: Part;
++  @Output() edit = new EventEmitter<Part>();
++  @Output() remove = new EventEmitter<string>();
++
++  onEdit(): void {
++    this.edit.emit(this.part);
++  }
++
++  onDelete(): void {
++    if (this.part._id) {
++      this.remove.emit(this.part._id);
++    }
++  }
++}
+diff --git a/frontend/src/app/part-list/part-list.component.html b/frontend/src/app/part-list/part-list.component.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..c26d4c40311b23f380124e3a18a697dc5e6eba02
+--- /dev/null
++++ b/frontend/src/app/part-list/part-list.component.html
+@@ -0,0 +1,16 @@
++<h2>Car Parts Tracker</h2>
++
++<app-part-edit
++  [selectedPart]="selectedPart"
++  (save)="onSavePart($event)"
++  (cancel)="onCancelEdit()"
++></app-part-edit>
++
++<div *ngIf="parts.length === 0" class="card">No parts yet. Add your first part.</div>
++
++<app-part-item
++  *ngFor="let part of parts"
++  [part]="part"
++  (edit)="onEditPart($event)"
++  (remove)="onDeletePart($event)"
++></app-part-item>
+diff --git a/frontend/src/app/part-list/part-list.component.ts b/frontend/src/app/part-list/part-list.component.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ee3e2dea8253a03659aacf15647bb8cec26fcece
+--- /dev/null
++++ b/frontend/src/app/part-list/part-list.component.ts
+@@ -0,0 +1,53 @@
++import { Component, OnInit } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { PartService } from '../services/part.service';
++import { Part } from '../models/part';
++import { PartItemComponent } from '../part-item/part-item.component';
++import { PartEditComponent } from '../part-edit/part-edit.component';
++
++@Component({
++  selector: 'app-part-list',
++  standalone: true,
++  imports: [CommonModule, PartItemComponent, PartEditComponent],
++  templateUrl: './part-list.component.html',
++})
++export class PartListComponent implements OnInit {
++  parts: Part[] = [];
++  selectedPart: Part | null = null;
++
++  constructor(private partService: PartService) {}
++
++  ngOnInit(): void {
++    this.loadParts();
++  }
++
++  loadParts(): void {
++    this.partService.getParts().subscribe({
++      next: (data) => (this.parts = data),
++      error: (error) => console.error('Error loading parts:', error),
++    });
++  }
++
++  onSavePart(part: Part): void {
++    if (part._id) {
++      this.partService.updatePart(part._id, part).subscribe(() => {
++        this.selectedPart = null;
++        this.loadParts();
++      });
++    } else {
++      this.partService.createPart(part).subscribe(() => this.loadParts());
++    }
++  }
++
++  onEditPart(part: Part): void {
++    this.selectedPart = part;
++  }
++
++  onDeletePart(id: string): void {
++    this.partService.deletePart(id).subscribe(() => this.loadParts());
++  }
++
++  onCancelEdit(): void {
++    this.selectedPart = null;
++  }
++}
+diff --git a/frontend/src/app/services/part.service.ts b/frontend/src/app/services/part.service.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3840b20b338734958ce4baf3942c3602befba5ed
+--- /dev/null
++++ b/frontend/src/app/services/part.service.ts
+@@ -0,0 +1,33 @@
++import { Injectable } from '@angular/core';
++import { HttpClient } from '@angular/common/http';
++import { Observable } from 'rxjs';
++import { Part } from '../models/part';
++
++@Injectable({
++  providedIn: 'root',
++})
++export class PartService {
++  private apiUrl = 'http://localhost:3000/parts';
++
++  constructor(private http: HttpClient) {}
++
++  getParts(): Observable<Part[]> {
++    return this.http.get<Part[]>(this.apiUrl);
++  }
++
++  getPartById(id: string): Observable<Part> {
++    return this.http.get<Part>(`${this.apiUrl}/${id}`);
++  }
++
++  createPart(part: Part): Observable<Part> {
++    return this.http.post<Part>(this.apiUrl, part);
++  }
++
++  updatePart(id: string, part: Part): Observable<Part> {
++    return this.http.put<Part>(`${this.apiUrl}/${id}`, part);
++  }
++
++  deletePart(id: string): Observable<{ message: string }> {
++    return this.http.delete<{ message: string }>(`${this.apiUrl}/${id}`);
++  }
++}
+diff --git a/frontend/src/favicon.ico b/frontend/src/favicon.ico
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/frontend/src/index.html b/frontend/src/index.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..1763fc9f4ac006144f4704452b9d66f7cf917273
+--- /dev/null
++++ b/frontend/src/index.html
+@@ -0,0 +1,12 @@
++<!doctype html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8" />
++    <title>CarPartsTracker</title>
++    <base href="/" />
++    <meta name="viewport" content="width=device-width, initial-scale=1" />
++  </head>
++  <body>
++    <app-root></app-root>
++  </body>
++</html>
+diff --git a/frontend/src/main.ts b/frontend/src/main.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..b1f44b6b95d8c953ff6cc5e8a1fba606fa722491
+--- /dev/null
++++ b/frontend/src/main.ts
+@@ -0,0 +1,7 @@
++import { bootstrapApplication } from '@angular/platform-browser';
++import { provideHttpClient } from '@angular/common/http';
++import { AppComponent } from './app/app.component';
++
++bootstrapApplication(AppComponent, {
++  providers: [provideHttpClient()],
++}).catch((err) => console.error(err));
+diff --git a/frontend/src/styles.css b/frontend/src/styles.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..2e9df75cc04792900614f2b48ab7f842c730b678
+--- /dev/null
++++ b/frontend/src/styles.css
+@@ -0,0 +1,21 @@
++body {
++  font-family: Arial, sans-serif;
++  max-width: 900px;
++  margin: 20px auto;
++  padding: 0 10px;
++}
++
++.card {
++  border: 1px solid #ddd;
++  border-radius: 8px;
++  padding: 12px;
++  margin-bottom: 10px;
++}
++
++button {
++  margin-right: 6px;
++}
++
++input {
++  margin-right: 6px;
++}
+diff --git a/frontend/tsconfig.app.json b/frontend/tsconfig.app.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..bac1e0223a515f95725826870b60137077c4cd5f
+--- /dev/null
++++ b/frontend/tsconfig.app.json
+@@ -0,0 +1,8 @@
++{
++  "extends": "./tsconfig.json",
++  "compilerOptions": {
++    "outDir": "./out-tsc/app"
++  },
++  "files": ["src/main.ts"],
++  "include": ["src/**/*.d.ts"]
++}
+diff --git a/frontend/tsconfig.json b/frontend/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..0641f84cf8f870f5b7f603e299fa5d47d9554a41
+--- /dev/null
++++ b/frontend/tsconfig.json
+@@ -0,0 +1,28 @@
++{
++  "compileOnSave": false,
++  "compilerOptions": {
++    "outDir": "./dist/out-tsc",
++    "strict": true,
++    "noImplicitOverride": true,
++    "noPropertyAccessFromIndexSignature": true,
++    "noImplicitReturns": true,
++    "noFallthroughCasesInSwitch": true,
++    "skipLibCheck": true,
++    "esModuleInterop": true,
++    "sourceMap": true,
++    "declaration": false,
++    "experimentalDecorators": true,
++    "moduleResolution": "bundler",
++    "importHelpers": true,
++    "target": "ES2022",
++    "module": "ES2022",
++    "useDefineForClassFields": false,
++    "lib": ["ES2022", "dom"]
++  },
++  "angularCompilerOptions": {
++    "enableI18nLegacyMessageIdFormat": false,
++    "strictInjectionParameters": true,
++    "strictInputAccessModifiers": true,
++    "strictTemplates": true
++  }
++}
+diff --git a/readme.md b/readme.md
+index f9042912ffbd4e140a1272cc27dabb59d2f4a465..4c9b082531158724b579cc5cfe1f45d196427bcb 100644
+--- a/readme.md
++++ b/readme.md
+@@ -1,2 +1,107 @@
+-carPartsTracker
+-this is a final project
+\ No newline at end of file
++# Car Parts Tracker (MEAN Final Project)
++
++A beginner-friendly **Single Page Application** using:
++- **MongoDB** (database)
++- **Express + Node.js** (backend API)
++- **Angular** (frontend SPA)
++
++The app tracks car parts with full CRUD.
++
++## Data model
++Each part has:
++- `partName` (string)
++- `brand` (string)
++- `price` (number)
++- `installed` (boolean)
++
++---
++
++## 1) Backend first (Express + MongoDB)
++
++### Files
++- `backend/server.js`
++- `backend/src/models/part.model.js`
++- `backend/src/controllers/part.controller.js`
++- `backend/src/routes/part.routes.js`
++
++### API routes
++- `GET /parts`
++- `GET /parts/:id`
++- `POST /parts`
++- `PUT /parts/:id`
++- `DELETE /parts/:id`
++
++### Run backend
++```bash
++cd backend
++npm install
++cp .env.example .env
++npm run dev
++```
++
++Backend runs at `http://localhost:3000`.
++
++---
++
++## 2) Angular service
++
++### File
++- `frontend/src/app/services/part.service.ts`
++
++This service calls the backend API for all CRUD actions:
++- `getParts()`
++- `getPartById(id)`
++- `createPart(part)`
++- `updatePart(id, part)`
++- `deletePart(id)`
++
++---
++
++## 3) Angular components
++
++### Required structure included
++- `part-list`
++- `part-item`
++- `part-edit`
++- `part.service.ts`
++
++### Component files
++- `frontend/src/app/part-list/*`
++- `frontend/src/app/part-item/*`
++- `frontend/src/app/part-edit/*`
++- Root component: `frontend/src/app/app.component.ts`
++
++The frontend is a simple SPA screen that lets you:
++- create part
++- view all parts
++- edit part
++- delete part
++
++---
++
++## 4) Run frontend
++
++```bash
++cd frontend
++npm install
++npm start
++```
++
++Frontend runs at `http://localhost:4200`.
++
++> Make sure backend is running first, then start frontend.
++
++---
++
++## 5) Beginner-friendly and easy demo flow
++
++Use this quick video demo script:
++1. Show app loads (SPA)
++2. Create a new part
++3. Create another part
++4. Edit one part (change price/installed)
++5. Delete one part
++6. Show MongoDB collection updated
++7. Briefly show backend routes + Angular service/components in code
++
++That demonstrates all rubric requirements in a short video.
