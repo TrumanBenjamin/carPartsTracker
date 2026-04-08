@@ -19,15 +19,17 @@
 
   <div *ngIf="parts.length === 0" class="card empty">No parts yet. Add your first part.</div>
 
-  <app-part-item
-    *ngFor="let part of parts"
-    [part]="part"
-    (edit)="onEditPart($event)"
-    (remove)="onDeletePart($event)"
-  ></app-part-item>
+  <div class="parts-list">
+    <app-part-item
+      *ngFor="let part of parts"
+      [part]="part"
+      (edit)="onEditPart($event)"
+      (remove)="onDeletePart($event)"
+    ></app-part-item>
+  </div>  
 
   <div class="card total-card" *ngIf="parts.length > 0">
-    <span>Total Value</span>
+    <span>Total Value:</span>
     <strong>${{ totalPrice.toFixed(2) }}</strong>
   </div>
 </div>
