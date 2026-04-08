@@ -1,9 +1,16 @@
 <div class="card">
-  <p><strong>Part:</strong> {{ part.partName }}</p>
-  <p><strong>Brand:</strong> {{ part.brand }}</p>
-  <p><strong>Price:</strong> ${{ part.price }}</p>
-  <p><strong>Installed:</strong> {{ part.installed ? 'Yes' : 'No' }}</p>
+  <div class="item-top">
+    <h4 class="item-name">{{ part.partName }}</h4>
+    <span class="item-price">${{ part.price }}</span>
+  </div>
 
-  <button (click)="onEdit()">Edit</button>
-  <button (click)="onDelete()">Delete</button>
+  <div class="meta">
+    <span><strong>Brand:</strong> {{ part.brand }}</span>
+    <span><strong>Installed:</strong> {{ part.installed ? 'Yes' : 'No' }}</span>
+  </div>
+
+  <div class="actions" style="margin-top: 12px;">
+    <button class="btn-primary" (click)="onEdit()">Edit</button>
+    <button class="btn-danger" (click)="onDelete()">Delete</button>
+  </div>
 </div>

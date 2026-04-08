@@ -1,38 +1,51 @@
 <div class="card">
   <h3>{{ selectedPart ? 'Edit Part' : 'Add New Part' }}</h3>
 
-  <form (ngSubmit)="onSubmit()">
-    <input
-      type="text"
-      placeholder="Part Name"
-      [(ngModel)]="formData.partName"
-      name="partName"
-      required
-    />
+  <form (ngSubmit)="onSubmit()" class="form-grid">
+    <div>
+      <label>Part Name</label>
+      <input
+        type="text"
+        placeholder="Brake Pads"
+        [(ngModel)]="formData.partName"
+        name="partName"
+        required
+      />
+    </div>
 
-    <input
-      type="text"
-      placeholder="Brand"
-      [(ngModel)]="formData.brand"
-      name="brand"
-      required
-    />
+    <div>
+      <label>Brand</label>
+      <input
+        type="text"
+        placeholder="Brembo"
+        [(ngModel)]="formData.brand"
+        name="brand"
+        required
+      />
+    </div>
 
-    <input
-      type="number"
-      placeholder="Price"
-      [(ngModel)]="formData.price"
-      name="price"
-      min="0"
-      required
-    />
+    <div>
+      <label>Price</label>
+      <input
+        type="number"
+        placeholder="120"
+        [(ngModel)]="formData.price"
+        name="price"
+        min="0"
+        required
+      />
+    </div>
 
-    <label>
-      Installed
+    <label class="checkbox-row">
       <input type="checkbox" [(ngModel)]="formData.installed" name="installed" />
+      Installed
     </label>
 
-    <button type="submit">{{ selectedPart ? 'Update' : 'Create' }}</button>
-    <button type="button" *ngIf="selectedPart" (click)="onCancel()">Cancel</button>
+    <div class="actions full">
+      <button type="submit" [class]="selectedPart ? 'btn-success' : 'btn-primary'">
+        {{ selectedPart ? 'Update' : 'Create' }}
+      </button>
+      <button type="button" class="btn-muted" *ngIf="selectedPart" (click)="onCancel()">Cancel</button>
+    </div>
   </form>
 </div>

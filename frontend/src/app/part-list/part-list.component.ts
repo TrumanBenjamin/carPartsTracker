@@ -14,6 +14,7 @@ import { PartEditComponent } from '../part-edit/part-edit.component';
 export class PartListComponent implements OnInit {
   parts: Part[] = [];
   selectedPart: Part | null = null;
+  errorMessage: string = '';
 
   constructor(private partService: PartService) {}
 

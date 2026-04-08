@@ -1,16 +1,28 @@
-<h2>Car Parts Tracker</h2>
+<div class="app-shell">
+  <header class="app-header">
+    <div>
+      <h2 class="app-title">Car Parts Tracker</h2>
+      <p class="app-subtitle">Simple CRUD dashboard for your installed and planned parts.</p>
+    </div>
+    <span class="badge">{{ parts.length }} total</span>
+  </header>
 
-<app-part-edit
-  [selectedPart]="selectedPart"
-  (save)="onSavePart($event)"
-  (cancel)="onCancelEdit()"
-></app-part-edit>
+  <div *ngIf="errorMessage" class="card notice">
+    <strong>Notice:</strong> {{ errorMessage }}
+  </div>
 
-<div *ngIf="parts.length === 0" class="card">No parts yet. Add your first part.</div>
+  <app-part-edit
+    [selectedPart]="selectedPart"
+    (save)="onSavePart($event)"
+    (cancel)="onCancelEdit()"
+  ></app-part-edit>
 
-<app-part-item
-  *ngFor="let part of parts"
-  [part]="part"
-  (edit)="onEditPart($event)"
-  (remove)="onDeletePart($event)"
-></app-part-item>
+  <div *ngIf="parts.length === 0" class="card empty">No parts yet. Add your first part.</div>
+
+  <app-part-item
+    *ngFor="let part of parts"
+    [part]="part"
+    (edit)="onEditPart($event)"
+    (remove)="onDeletePart($event)"
+  ></app-part-item>
+</div>
